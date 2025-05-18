@@ -83,11 +83,14 @@ def load_all_documents(folder_path: str) -> List[Document]:
 def _load_single_document(file_path: str) -> List[Document]:
     try:
         logger.info(f"Iniciando carregamento de: {os.path.basename(file_path)}")
+
         loader = _choose_loader(file_path)
         docs = loader.load(file_path)
         for doc in docs:
             doc.metadata["source_doc"] = os.path.basename(file_path)
+
         logger.info(f"Concluído: {os.path.basename(file_path)}")
+        
         return docs
     except Exception as e:
         logger.error(f"Erro ao processar {os.path.basename(file_path)}: {e}")

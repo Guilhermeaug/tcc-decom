@@ -1,10 +1,10 @@
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 from ..utils.logger import get_logger
 from ..config import *
 from .config import TEMPLATE
+from .llm_config import get_llm, LLMProvider
 
 logger = get_logger(__name__)
 
@@ -13,44 +13,55 @@ try:
     db = FAISS.load_local(
         VECTORSTORE_PATH, EMBEDDING_MODEL, allow_dangerous_deserialization=True
     )
-    retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+    retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 3})
     logger.info("Índice carregado com sucesso")
 except Exception as e:
     logger.error(f"Erro ao carregar índice de vetores: {e}")
     raise
 
-try:
-    logger.info("Inicializando modelo de linguagem (LLM)")
-    llm = OllamaLLM(model="deepseek-r1:8b")
-    logger.info(f"Modelo de linguagem inicializado com sucesso: {llm.model}")
-except Exception as e:
-    logger.error(f"Erro ao inicializar o modelo de linguagem: {e}")
-    raise
+
+def initialize_llm(provider: LLMProvider = "openai", model: str = None, **kwargs):
+    try:
+        logger.info(f"Inicializando modelo de linguagem (LLM) - Provider: {provider}")
+        llm = get_llm(provider=provider, model=model, **kwargs)
+        logger.info(f"Modelo de linguagem inicializado com sucesso: {llm.model}")
+        return llm
+    except Exception as e:
+        logger.error(f"Erro ao inicializar o modelo de linguagem: {e}")
+        raise
+
 
 QA_CHAIN_PROMPT = PromptTemplate(
     input_variables=["context", "question"],
     template=TEMPLATE,
 )
 
-try:
-    logger.info("Configurando cadeia de processamento RAG")
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=retriever,
-        return_source_documents=True,
-        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-    )
-    logger.info("Cadeia de processamento RAG configurada com sucesso")
-except Exception as e:
-    logger.error(f"Erro ao configurar cadeia de processamento RAG: {e}")
-    raise
+
+def create_qa_chain(llm, retriever):
+    try:
+        logger.info("Configurando cadeia de processamento RAG")
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=retriever,
+            return_source_documents=True,
+            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+        )
+        logger.info("Cadeia de processamento RAG configurada com sucesso")
+        return qa_chain
+    except Exception as e:
+        logger.error(f"Erro ao configurar cadeia de processamento RAG: {e}")
+        raise
 
 
-def main():
+def main(provider: LLMProvider = "openai", model: str = None, **llm_kwargs):
     logger.info("Iniciando sistema de perguntas e respostas")
+
+    llm = initialize_llm(provider, model, **llm_kwargs)
+    qa_chain = create_qa_chain(llm, retriever)
+
     while True:
-        question = input("\n❓ Pergunta (ou 'sair'): ")
+        question = input("\nDigite sua pergunta (ou 'sair'): ")
         if question.lower() == "sair":
             logger.info("Encerrando o sistema")
             break
@@ -63,7 +74,7 @@ def main():
         for i, doc in enumerate(retrieved_docs):
             logger.debug(f"--- Documento {i+1} ---")
             logger.debug(f"Fonte: {doc.metadata.get('source_doc', 'Desconhecido')}")
-            logger.debug(f"Conteúdo (primeiros 300 chars): {doc.page_content[:300]}...")
+            logger.debug(f"Conteúdo: {doc.page_content}")
 
         try:
             logger.info("Gerando resposta...")

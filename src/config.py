@@ -13,6 +13,6 @@ EMBEDDING_MODEL = HuggingFaceEmbeddings(
     encode_kwargs={"normalize_embeddings": True},
 )
 CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 150
+CHUNK_OVERLAP = 100
 MIN_CHUNK_LENGTH = 30
 VECTORSTORE_PATH = "embeddings/index"
