@@ -1,10 +1,13 @@
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
+from dotenv import load_dotenv
 from ..utils.logger import get_logger
 from ..config import *
 from .config import TEMPLATE
 from .llm_config import get_llm, LLMProvider
+
+load_dotenv()
 
 logger = get_logger(__name__)
 
