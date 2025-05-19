@@ -6,7 +6,6 @@ from typing import Literal, Optional
 LLMProvider = Literal["openai", "anthropic", "google"]
 
 DEFAULT_PROVIDER: LLMProvider = "openai"
-DEFAULT_MODEL = "gpt-4-turbo-preview"  # Default model for OpenAI
 
 LLM_CONFIGS = {
     "openai": {
@@ -17,7 +16,7 @@ LLM_CONFIGS = {
     },
     "google": {
         "class": GoogleGenerativeAI,
-        "default_model": "gemini-2.0-flash",
+        "default_model": "gemini-2.0-pro",
         "required_params": ["model"],
         "optional_params": ["temperature", "max_tokens"],
     },

@@ -27,7 +27,7 @@ def initialize_llm(provider: LLMProvider = "openai", model: str = None, **kwargs
     try:
         logger.info(f"Inicializando modelo de linguagem (LLM) - Provider: {provider}")
         llm = get_llm(provider=provider, model=model, **kwargs)
-        logger.info(f"Modelo de linguagem inicializado com sucesso: {llm.model}")
+        logger.info(f"Modelo de linguagem inicializado com sucesso: {llm.model_name}")
         return llm
     except Exception as e:
         logger.error(f"Erro ao inicializar o modelo de linguagem: {e}")
