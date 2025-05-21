@@ -22,5 +22,5 @@ Sua tarefa é responder à "Pergunta do Usuário" usando *exclusivamente* as inf
 {context}
 
 **Pergunta do Usuário:**
-{question}
+{input}
 """

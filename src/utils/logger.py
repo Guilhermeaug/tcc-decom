@@ -25,7 +25,7 @@ def setup_logger(name):
     logger = logging.getLogger(name)
 
     if not logger.handlers:
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
 
         log_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs"
@@ -36,7 +36,7 @@ def setup_logger(name):
         log_file = os.path.join(log_dir, f"tcc_{timestamp}.log")
 
         file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
@@ -44,7 +44,7 @@ def setup_logger(name):
         file_handler.setFormatter(file_formatter)
 
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.DEBUG)
         console_formatter = CustomFormatter("%(levelname)s - %(message)s")
         console_handler.setFormatter(console_formatter)
 

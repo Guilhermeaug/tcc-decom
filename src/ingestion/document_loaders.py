@@ -9,6 +9,8 @@ from langchain_community.document_loaders import (
     UnstructuredPDFLoader,
     UnstructuredWordDocumentLoader,
     UnstructuredExcelLoader,
+    TextLoader,
+    UnstructuredMarkdownLoader
 )
 from ..utils.logger import get_logger
 from ..config import MIN_CHUNK_LENGTH
@@ -47,6 +49,16 @@ class DocLoader(DocumentLoaderStrategy):
 class ExcelLoader(DocumentLoaderStrategy):
     def load(self, file_path: str) -> List[Document]:
         return UnstructuredExcelLoader(file_path, mode="elements").load()
+    
+from langchain_community.document_loaders import TextLoader as LangchainTextLoader
+
+class TextLoaderStrategy(DocumentLoaderStrategy):
+    def load(self, file_path: str) -> List[Document]:
+        return TextLoader(file_path).load()
+    
+class MarkdownLoader(DocumentLoaderStrategy):
+    def load(self, file_path: str) -> List[Document]:
+        return UnstructuredMarkdownLoader(file_path).load()
 
 
 def load_all_documents(folder_path: str) -> List[Document]:
@@ -126,6 +138,10 @@ def _choose_loader(file_path: str) -> DocumentLoaderStrategy:
         return DocLoader()
     elif file_path.endswith(".xls") or file_path.endswith(".xlsx"):
         return ExcelLoader()
+    elif file_path.endswith(".txt"):
+        return TextLoaderStrategy()
+    elif file_path.endswith(".md"):
+        return MarkdownLoader()
     else:
         error_msg = f"Unsupported file format: {file_path}"
         logger.error(error_msg)

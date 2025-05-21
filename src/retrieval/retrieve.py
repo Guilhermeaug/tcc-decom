@@ -1,5 +1,6 @@
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 from ..utils.logger import get_logger
@@ -23,33 +24,28 @@ except Exception as e:
     raise
 
 
-def initialize_llm(provider: LLMProvider = "openai", model: str = None, **kwargs):
+def initialize_llm(provider: LLMProvider = "openai", model="gpt-4o-mini", **kwargs):
     try:
         logger.info(f"Inicializando modelo de linguagem (LLM) - Provider: {provider}")
         llm = get_llm(provider=provider, model=model, **kwargs)
-        logger.info(f"Modelo de linguagem inicializado com sucesso: {llm.model_name}")
+        logger.info(f"Modelo de linguagem inicializado com sucesso: {model}")
         return llm
     except Exception as e:
         logger.error(f"Erro ao inicializar o modelo de linguagem: {e}")
         raise
 
 
-QA_CHAIN_PROMPT = PromptTemplate(
-    input_variables=["context", "question"],
-    template=TEMPLATE,
-)
-
-
 def create_qa_chain(llm, retriever):
     try:
         logger.info("Configurando cadeia de processamento RAG")
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=retriever,
-            return_source_documents=True,
-            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+
+        document_chain_prompt = PromptTemplate(
+            input_variables=["context", "input"],
+            template=TEMPLATE,
         )
+        combine_docs_chain = create_stuff_documents_chain(llm, document_chain_prompt)
+        qa_chain = create_retrieval_chain(retriever, combine_docs_chain)
+
         logger.info("Cadeia de processamento RAG configurada com sucesso")
         return qa_chain
     except Exception as e:
@@ -57,7 +53,7 @@ def create_qa_chain(llm, retriever):
         raise
 
 
-def main(provider: LLMProvider = "openai", model: str = None, **llm_kwargs):
+def main(provider: LLMProvider = "openai", model="gpt-4o-mini", **llm_kwargs):
     logger.info("Iniciando sistema de perguntas e respostas")
 
     llm = initialize_llm(provider, model, **llm_kwargs)
@@ -73,7 +69,8 @@ def main(provider: LLMProvider = "openai", model: str = None, **llm_kwargs):
         logger.info(f"Processando pergunta: {question}")
 
         logger.debug("Recuperando documentos relevantes")
-        retrieved_docs = retriever.invoke(query)
+
+        retrieved_docs = retriever.get_relevant_documents(query)
         for i, doc in enumerate(retrieved_docs):
             logger.debug(f"--- Documento {i+1} ---")
             logger.debug(f"Fonte: {doc.metadata.get('source_doc', 'Desconhecido')}")
@@ -81,14 +78,17 @@ def main(provider: LLMProvider = "openai", model: str = None, **llm_kwargs):
 
         try:
             logger.info("Gerando resposta...")
-            result = qa_chain.invoke({"query": query})
+
+            result = qa_chain.invoke({"input": query})
 
             print("\n🧠 Resposta:")
-            print(result["result"])
+            # The new chain returns the answer in the "answer" key
+            print(result["answer"])
             logger.info("Resposta gerada com sucesso")
 
             print("\n📚 Fontes:")
-            for doc in result["source_documents"]:
+            # The new chain returns source documents in the "context" key
+            for doc in result["context"]:
                 source = doc.metadata.get("source_doc", "Desconhecido")
                 print(f"- {source}")
                 logger.debug(f"Utilizando fonte: {source}")

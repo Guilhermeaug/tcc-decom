@@ -39,5 +39,6 @@ def get_llm(
     llm_class = config["class"]
 
     model = model or config["default_model"]
+    max_tokens = kwargs.get("max_tokens", 4096)
 
-    return llm_class(model=model, **kwargs)
+    return llm_class(model=model, max_tokens=max_tokens, **kwargs)

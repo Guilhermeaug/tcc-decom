@@ -2,9 +2,9 @@ from typing import List
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from src.ingestion.document_loaders import load_all_documents
-from src.utils.logger import get_logger
-from src.config import *
+from .document_loaders import load_all_documents
+from ..utils.logger import get_logger
+from ..config import *
 
 logger = get_logger(__name__)
 
@@ -33,9 +33,6 @@ def main():
 
 def is_chunk_useful(chunk: Document, min_length: int) -> bool:
     content = chunk.page_content.strip()
-    if len(content) < min_length:
-        logger.warning(f"Ignorando chunk curto: {content[:100]}...")
-        return False
     return True
 
 
